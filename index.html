@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aventura TIC</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@500;600;700&display=swap');
+
+  :root{
+    --ink:#1E1A3C;
+    --ink-soft:#4A4470;
+    --paper:#FFF9EE;
+    --paper-2:#F6EEDC;
+    --sun:#FFC93C;
+    --sun-deep:#E8A800;
+    --teal:#22B89C;
+    --teal-bg:#CFF5EA;
+    --coral:#FF6A55;
+    --coral-bg:#FFDCD5;
+    --lilac:#8B7CF6;
+    --lilac-soft:#D9D2FF;
+    --display:'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+    --body:'Figtree', 'Segoe UI', sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:var(--body);
+    color:var(--ink);
+    background-color:#EDE6FB;
+    background-image:
+      radial-gradient(rgba(30,26,60,0.10) 1.5px, transparent 1.5px),
+      radial-gradient(circle at 10% 12%, #DCEEFB 0%, transparent 42%),
+      radial-gradient(circle at 90% 10%, #FFE6D9 0%, transparent 40%),
+      radial-gradient(circle at 92% 90%, #D8F3E5 0%, transparent 44%),
+      radial-gradient(circle at 8% 92%, #FFF3D6 0%, transparent 40%);
+    background-size:26px 26px, auto, auto, auto, auto;
+    background-attachment:fixed;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 16px;
+  }
+
+  .stage{ width:100%; max-width:580px; }
+
+  .card{
+    background:var(--paper);
+    border:3px solid var(--ink);
+    border-radius:24px;
+    padding:32px 30px 30px;
+    box-shadow:8px 8px 0 var(--ink);
+  }
+
+  .hidden{ display:none !important; }
+
+  /* ---------- Tipografía ---------- */
+  h1{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:3rem;
+    line-height:1;
+    letter-spacing:-0.03em;
+    margin:0 0 12px;
+  }
+  .subtitle{
+    font-size:1.05rem;
+    line-height:1.5;
+    color:var(--ink-soft);
+    margin:0 0 26px;
+    max-width:44ch;
+  }
+
+  /* ---------- Inicio ---------- */
+  .stickers{ display:flex; gap:10px; margin-bottom:22px; }
+  .sticker{
+    width:54px; height:54px;
+    display:grid; place-items:center;
+    font-size:1.7rem;
+    border:3px solid var(--ink);
+    border-radius:16px;
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  .sticker:nth-child(1){ background:var(--sun); transform:rotate(-6deg); }
+  .sticker:nth-child(2){ background:var(--teal-bg); transform:rotate(3deg); }
+  .sticker:nth-child(3){ background:var(--lilac-soft); transform:rotate(-3deg); }
+  .sticker:nth-child(4){ background:var(--coral-bg); transform:rotate(5deg); }
+
+  label{ display:block; font-weight:700; margin-bottom:8px; }
+
+  input[type="text"]{
+    width:100%;
+    padding:14px 16px;
+    border:3px solid var(--ink);
+    border-radius:14px;
+    font-family:var(--body);
+    font-size:1.05rem;
+    font-weight:600;
+    background:#fff;
+    color:var(--ink);
+    outline:none;
+    transition:box-shadow .12s ease, background .12s ease;
+  }
+  input[type="text"]::placeholder{ color:#9A94B8; font-weight:500; }
+  input[type="text"]:focus{ box-shadow:4px 4px 0 var(--sun); }
+  input[type="text"].invalid{ background:var(--coral-bg); box-shadow:4px 4px 0 var(--coral); }
+
+  .name-error{
+    display:none;
+    margin-top:10px;
+    font-weight:700;
+    font-size:0.92rem;
+    color:#B73A28;
+  }
+  .name-error.show{ display:block; }
+
+  /* ---------- Botones ---------- */
+  .btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    margin-top:22px;
+    padding:15px 24px;
+    border:3px solid var(--ink);
+    border-radius:14px;
+    background:var(--sun);
+    color:var(--ink);
+    font-family:var(--display);
+    font-weight:700;
+    font-size:1.1rem;
+    cursor:pointer;
+    box-shadow:0 5px 0 var(--ink);
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 0 var(--ink); }
+  .btn:active{ transform:translateY(4px); box-shadow:0 1px 0 var(--ink); }
+  .btn.secondary{ background:var(--paper); margin-top:16px; }
+
+  :focus-visible{ outline:4px solid var(--lilac); outline-offset:3px; }
+
+  /* ---------- Juego: encabezado ---------- */
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+    font-family:var(--display);
+    font-weight:700;
+  }
+  .level-text{ font-size:1.05rem; }
+  .score-chip{
+    display:flex; align-items:center; gap:6px;
+    background:var(--sun);
+    border:3px solid var(--ink);
+    border-radius:999px;
+    padding:3px 14px 3px 10px;
+    font-size:1rem;
+    box-shadow:2px 2px 0 var(--ink);
+  }
+
+  .path{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:0 4px 28px;
+  }
+  .path::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; top:50%;
+    height:4px;
+    background:var(--paper-2);
+    border-top:2px solid var(--ink);
+    border-bottom:2px solid var(--ink);
+    transform:translateY(-50%);
+  }
+  .dot{
+    position:relative;
+    width:20px; height:20px;
+    border-radius:50%;
+    background:var(--paper);
+    border:3px solid var(--ink);
+  }
+  .dot.current{ background:var(--sun); transform:scale(1.3); }
+  .dot.ok{ background:var(--teal); }
+  .dot.bad{ background:var(--coral); }
+  .dot.current.ok, .dot.current.bad{ transform:scale(1.3); }
+
+  /* ---------- Juego: pregunta ---------- */
+  .q-head{ display:flex; gap:16px; align-items:flex-start; margin-bottom:22px; }
+  .q-icon{
+    flex:none;
+    width:60px; height:60px;
+    display:grid; place-items:center;
+    font-size:1.9rem;
+    background:var(--lilac-soft);
+    border:3px solid var(--ink);
+    border-radius:18px;
+    box-shadow:3px 3px 0 var(--ink);
+    transform:rotate(-4deg);
+  }
+  .q-text{
+    font-family:var(--display);
+    font-size:1.3rem;
+    font-weight:700;
+    line-height:1.28;
+    letter-spacing:-0.01em;
+    padding-top:2px;
+  }
+
+  .options{ display:flex; flex-direction:column; gap:12px; }
+
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-align:left;
+    padding:12px 16px 12px 12px;
+    border:3px solid var(--ink);
+    border-radius:14px;
+    background:#fff;
+    font-family:var(--body);
+    font-size:1rem;
+    font-weight:600;
+    line-height:1.35;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 4px 0 var(--ink);
+    transition:transform .08s ease, box-shadow .08s ease, background .12s ease;
+  }
+  .opt .letter{
+    flex:none;
+    width:32px; height:32px;
+    display:grid; place-items:center;
+    border:3px solid var(--ink);
+    border-radius:50%;
+    background:var(--paper-2);
+    font-family:var(--display);
+    font-weight:800;
+    font-size:0.95rem;
+  }
+  .opt:hover:not(:disabled){ background:#FFF3C9; transform:translateY(-1px); box-shadow:0 5px 0 var(--ink); }
+  .opt:active:not(:disabled){ transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .opt:disabled{ cursor:default; }
+  .opt:disabled:not(.correct):not(.incorrect){ opacity:.5; }
+
+  .opt.correct{ background:var(--teal-bg); transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .opt.correct .letter{ background:var(--teal); color:#fff; }
+  .opt.incorrect{ background:var(--coral-bg); transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .opt.incorrect .letter{ background:var(--coral); color:#fff; }
+
+  /* ---------- Retroalimentación ---------- */
+  .feedback{
+    display:none;
+    margin-top:20px;
+    padding:14px 16px;
+    border:3px solid var(--ink);
+    border-radius:14px;
+    font-size:0.98rem;
+    line-height:1.5;
+  }
+  .feedback.show{ display:block; }
+  .feedback .fb-title{
+    display:block;
+    font-family:var(--display);
+    font-weight:800;
+    font-size:1.1rem;
+    margin-bottom:2px;
+  }
+  .feedback.ok{ background:var(--teal-bg); }
+  .feedback.bad{ background:var(--coral-bg); }
+
+  /* ---------- Resultados ---------- */
+  .result-top{ display:flex; align-items:center; gap:18px; margin-bottom:8px; }
+  .result-emoji{
+    flex:none;
+    width:84px; height:84px;
+    display:grid; place-items:center;
+    font-size:2.8rem;
+    background:var(--sun);
+    border:3px solid var(--ink);
+    border-radius:24px;
+    box-shadow:4px 4px 0 var(--ink);
+    transform:rotate(-5deg);
+  }
+  .result-score{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:4rem;
+    line-height:1;
+    letter-spacing:-0.04em;
+  }
+  .result-score small{ font-size:1.6rem; color:var(--ink-soft); letter-spacing:0; }
+  .result-sub{
+    font-size:1.05rem;
+    line-height:1.5;
+    color:var(--ink-soft);
+    margin:12px 0 18px;
+  }
+  .badge-row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .badge{
+    background:var(--lilac-soft);
+    border:3px solid var(--ink);
+    border-radius:999px;
+    padding:5px 14px;
+    font-weight:700;
+    font-size:0.9rem;
+  }
+  .footer-note{
+    margin:22px 0 0;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:480px){
+    .card{ padding:24px 18px 22px; box-shadow:6px 6px 0 var(--ink); }
+    h1{ font-size:2.4rem; }
+    .q-text{ font-size:1.12rem; }
+    .q-icon{ width:52px; height:52px; font-size:1.6rem; }
+    .result-score{ font-size:3.2rem; }
+    .result-emoji{ width:70px; height:70px; font-size:2.3rem; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- PANTALLA DE INICIO -->
+  <div class="card" id="screen-start">
+    <div class="stickers" aria-hidden="true">
+      <span class="sticker">💻</span><span class="sticker">🌐</span><span class="sticker">📊</span><span class="sticker">☁️</span>
+    </div>
+    <h1>Aventura TIC</h1>
+    <p class="subtitle" id="startSubtitle">Pon a prueba lo que sabes sobre software, servicios de Internet, ofimática y herramientas colaborativas.</p>
+    <label for="playerName">Escribe tu nombre completo</label>
+    <input type="text" id="playerName" placeholder="Nombre y apellidos" maxlength="60" autocomplete="off">
+    <div class="name-error" id="nameError" role="alert">Escribe tu nombre completo para comenzar.</div>
+    <button class="btn" id="startBtn">Comenzar aventura</button>
+  </div>
+
+  <!-- PANTALLA DE JUEGO -->
+  <div class="card hidden" id="screen-game">
+    <div class="top-row">
+      <span class="level-text" id="levelPill">Nivel 1 de 9</span>
+      <span class="score-chip" id="scorePill">⭐ 0</span>
+    </div>
+    <div class="path" id="path" role="img" aria-label="Progreso de niveles"></div>
+
+    <div class="q-head">
+      <span class="q-icon" id="qIcon" aria-hidden="true">💻</span>
+      <div class="q-text" id="qText">Pregunta</div>
+    </div>
+    <div class="options" id="optionsBox"></div>
+    <div class="feedback" id="feedbackBox" role="status" aria-live="polite"></div>
+
+    <button class="btn hidden" id="nextBtn">Siguiente nivel</button>
+  </div>
+
+  <!-- PANTALLA DE RESULTADOS -->
+  <div class="card hidden" id="screen-result">
+    <div class="result-top">
+      <div class="result-emoji" id="resultEmoji">🏆</div>
+      <div class="result-score" id="resultScore">0<small>/9</small></div>
+    </div>
+    <div class="result-sub" id="resultSub">¡Buen trabajo!</div>
+    <div class="badge-row" id="badgeRow"></div>
+    <button class="btn" id="downloadBtn">Descargar mi certificado</button>
+    <button class="btn secondary" id="retryBtn">Jugar de nuevo</button>
+    <p class="footer-note">Aventura TIC: software y servicios de Internet</p>
+  </div>
+
+</div>
+
+<canvas id="certCanvas" width="1000" height="700" style="display:none;"></canvas>
+
+<script>
+const questions = [
+  {
+    icon: "💻",
+    text: "¿Cuál de estas opciones es un ejemplo de software de sistema?",
+    options: ["Sistema operativo (Windows, Linux)", "Editor de video", "Navegador web", "Hoja de cálculo"],
+    correct: 0,
+    tip: "El software de sistema (como el sistema operativo) permite que el hardware funcione y sirve de base para los demás programas."
+  },
+  {
+    icon: "🧑‍💻",
+    text: "El software de programación se usa principalmente para...",
+    options: ["Ver películas", "Crear y desarrollar otros programas", "Escuchar música", "Navegar en redes sociales"],
+    correct: 1,
+    tip: "El software de programación incluye los lenguajes y herramientas que usan los desarrolladores para crear nuevos programas."
+  },
+  {
+    icon: "📊",
+    text: "Un procesador de texto o una hoja de cálculo son ejemplos de...",
+    options: ["Software de sistema", "Software de programación", "Software de aplicación", "Firmware"],
+    correct: 2,
+    tip: "El software de aplicación está diseñado para que el usuario final realice tareas específicas, como redactar documentos o hacer cálculos."
+  },
+  {
+    icon: "📧",
+    text: "¿Cuál de los siguientes es un servicio de Internet para el intercambio de mensajes?",
+    options: ["Correo electrónico", "Disco duro", "Procesador", "Impresora"],
+    correct: 0,
+    tip: "El correo electrónico es uno de los servicios de Internet más usados para comunicarse."
+  },
+  {
+    icon: "☁️",
+    text: "Guardar y acceder a archivos desde cualquier lugar a través de Internet corresponde a...",
+    options: ["Telefonía IP", "Computación en la nube", "Foro web", "Wiki"],
+    correct: 1,
+    tip: "La computación en la nube permite almacenar y usar información sin depender de un solo computador."
+  },
+  {
+    icon: "📹",
+    text: "Reunirte con tu equipo de trabajo en tiempo real desde distintas ciudades se logra gracias a...",
+    options: ["Un blog", "Una lista de correos", "La videoconferencia por Internet", "Un buscador"],
+    correct: 2,
+    tip: "La videoconferencia permite la comunicación en tiempo real entre personas ubicadas en distintos lugares."
+  },
+  {
+    icon: "🗂️",
+    text: "En el trabajo en equipo, organizar tareas en tarjetas, listas y checklist es típico de una herramienta como...",
+    options: ["Trello", "Un correo electrónico", "Un antivirus", "Un sistema operativo"],
+    correct: 0,
+    tip: "Trello es una herramienta colaborativa que organiza proyectos mediante tableros, tarjetas y listas."
+  },
+  {
+    icon: "🖨️",
+    text: "¿Cuál de las siguientes es una herramienta ofimática?",
+    options: ["Un router", "Una hoja de cálculo", "Un servidor", "Un modem"],
+    correct: 1,
+    tip: "La ofimática agrupa herramientas como procesadores de texto, hojas de cálculo y presentaciones para el trabajo diario."
+  },
+  {
+    icon: "📝",
+    text: "Editar un mismo documento entre varias personas al mismo tiempo, cada una desde su computador, es posible gracias a...",
+    options: ["Un documento impreso", "Un disco duro externo", "Las herramientas de documentos colaborativos en la nube", "Un software de sistema instalado en un solo equipo"],
+    correct: 2,
+    tip: "Las herramientas colaborativas en la nube (como Google Docs o Word en línea) permiten que varias personas trabajen en el mismo archivo en tiempo real."
+  },
+  {
+    icon: "🚀",
+    text: "Incorporar TIC en los procesos de una empresa busca principalmente...",
+    options: ["Aumentar el papeleo", "Mejorar la productividad y la efectividad", "Eliminar la comunicación", "Reducir el uso de Internet"],
+    correct: 1,
+    tip: "Las TIC bien aplicadas ayudan a optimizar procesos, mejorar la coordinación y aumentar la productividad."
+  }
+];
+
+const total = questions.length;
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+let currentLevel = 0;
+let score = 0;
+let playerName = "";
+let answered = false;
+let history = [];
+let lastBadge = "";
+
+const screenStart = document.getElementById('screen-start');
+const screenGame = document.getElementById('screen-game');
+const screenResult = document.getElementById('screen-result');
+const nameInput = document.getElementById('playerName');
+const nameError = document.getElementById('nameError');
+
+document.getElementById('startSubtitle').textContent =
+  `Pon a prueba lo que sabes sobre software, servicios de Internet, ofimática y herramientas colaborativas. ${total} niveles te esperan.`;
+
+nameInput.addEventListener('input', () => {
+  if(nameInput.value.trim()){
+    nameInput.classList.remove('invalid');
+    nameError.classList.remove('show');
+  }
+});
+nameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') document.getElementById('startBtn').click();
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  const name = nameInput.value.trim();
+  if(!name){
+    nameInput.classList.add('invalid');
+    nameError.classList.add('show');
+    nameInput.focus();
+    return;
+  }
+  nameInput.classList.remove('invalid');
+  nameError.classList.remove('show');
+  playerName = name;
+  screenStart.classList.add('hidden');
+  screenGame.classList.remove('hidden');
+  currentLevel = 0;
+  score = 0;
+  history = [];
+  loadQuestion();
+});
+
+function renderPath(){
+  const path = document.getElementById('path');
+  path.innerHTML = "";
+  for(let i = 0; i < total; i++){
+    const d = document.createElement('span');
+    let cls = 'dot';
+    if(i < history.length) cls += ' ' + history[i];
+    if(i === currentLevel) cls += ' current';
+    d.className = cls;
+    path.appendChild(d);
+  }
+  path.setAttribute('aria-label', `Nivel ${currentLevel + 1} de ${total}`);
+}
+
+function loadQuestion(){
+  answered = false;
+  const q = questions[currentLevel];
+  document.getElementById('levelPill').textContent = `Nivel ${currentLevel + 1} de ${total}`;
+  document.getElementById('scorePill').textContent = `⭐ ${score}`;
+  renderPath();
+  document.getElementById('qIcon').textContent = q.icon;
+  document.getElementById('qText').textContent = q.text;
+
+  const box = document.getElementById('optionsBox');
+  box.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    const letter = document.createElement('span');
+    letter.className = 'letter';
+    letter.textContent = LETTERS[i];
+    const label = document.createElement('span');
+    label.textContent = opt;
+    btn.appendChild(letter);
+    btn.appendChild(label);
+    btn.addEventListener('click', () => selectOption(i));
+    box.appendChild(btn);
+  });
+
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback';
+  fb.innerHTML = "";
+  const next = document.getElementById('nextBtn');
+  next.classList.add('hidden');
+  next.textContent = (currentLevel === total - 1) ? "Ver mi resultado" : "Siguiente nivel";
+}
+
+function selectOption(i){
+  if(answered) return;
+  answered = true;
+  const q = questions[currentLevel];
+  const isCorrect = (i === q.correct);
+  const opts = document.querySelectorAll('.opt');
+
+  opts.forEach((b, idx) => {
+    b.disabled = true;
+    if(idx === i){
+      b.classList.add(isCorrect ? 'correct' : 'incorrect');
+      b.querySelector('.letter').textContent = isCorrect ? "✓" : "✕";
+    }
+  });
+
+  history.push(isCorrect ? 'ok' : 'bad');
+  if(isCorrect) score++;
+  document.getElementById('scorePill').textContent = `⭐ ${score}`;
+  renderPath();
+
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'bad');
+  fb.innerHTML = "";
+  const title = document.createElement('span');
+  title.className = 'fb-title';
+  title.textContent = isCorrect ? "¡Correcto!" : "Te equivocaste en esta pregunta";
+  const msg = document.createElement('span');
+  msg.textContent = isCorrect
+    ? q.tip
+    : "Te recomendamos revisar el material de formación y las sesiones para reforzar este tema.";
+  fb.appendChild(title);
+  fb.appendChild(msg);
+
+  const next = document.getElementById('nextBtn');
+  next.classList.remove('hidden');
+  next.focus();
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentLevel++;
+  if(currentLevel < total){
+    loadQuestion();
+  } else {
+    showResult();
+  }
+});
+
+function showResult(){
+  screenGame.classList.add('hidden');
+  screenResult.classList.remove('hidden');
+
+  document.getElementById('resultScore').innerHTML = `${score}<small>/${total}</small>`;
+
+  const pct = score / total;
+  let emoji, sub, badges;
+  if(pct >= 0.9){
+    emoji = "🏆"; sub = `¡Excelente, ${playerName}! Dominas los conceptos de TIC.`;
+    badges = ["Experto TIC", "Nivel maestro"];
+  } else if(pct >= 0.7){
+    emoji = "🌟"; sub = `¡Muy bien, ${playerName}! Tienes buen manejo de las TIC.`;
+    badges = ["Buen desempeño", "Casi experto"];
+  } else if(pct >= 0.5){
+    emoji = "🙂"; sub = `Vas bien, ${playerName}. Repasa algunos temas y mejorarás.`;
+    badges = ["En camino"];
+  } else {
+    emoji = "🌱"; sub = `¡Sigue practicando, ${playerName}! Repasa el material de formación y las sesiones, y vuelve a intentarlo.`;
+    badges = ["Aprendiz TIC"];
+  }
+
+  lastBadge = badges[0];
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultSub').textContent = sub;
+
+  const badgeRow = document.getElementById('badgeRow');
+  badgeRow.innerHTML = "";
+  badges.forEach(b => {
+    const span = document.createElement('span');
+    span.className = 'badge';
+    span.textContent = b;
+    badgeRow.appendChild(span);
+  });
+}
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+  screenResult.classList.add('hidden');
+  screenStart.classList.remove('hidden');
+  nameInput.value = playerName;
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  drawCertificate();
+});
+
+async function drawCertificate(){
+  try{
+    await Promise.all([
+      document.fonts.load("800 58px 'Bricolage Grotesque'"),
+      document.fonts.load("700 22px 'Figtree'"),
+      document.fonts.load("600 22px 'Figtree'")
+    ]);
+  }catch(e){}
+
+  const canvas = document.getElementById('certCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const PLUM = "#4B3A62", SOFT = "#6B5A80", CORAL = "#F0674C", LEAF = "#5FBF9B";
+
+  // fondo pastel con degradado
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, "#E9E1F7");
+  grad.addColorStop(0.5, "#DCEEFB");
+  grad.addColorStop(1, "#FFE6D9");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // circulos decorativos de fondo
+  const bubbles = [
+    [70, 70, 100, "#FFF3D6", 0.9],
+    [W-60, 90, 70, "#FFE6D9", 0.9],
+    [W-80, H-80, 120, "#D8F3E5", 0.9],
+    [60, H-70, 80, "#DCEEFB", 0.9],
+    [W/2, H+40, 90, "#E9E1F7", 0.8]
+  ];
+  bubbles.forEach(([x, y, r, c, a]) => {
+    ctx.globalAlpha = a; ctx.fillStyle = c;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // tarjeta central con sombra suave
+  const pad = 50;
+  ctx.save();
+  ctx.shadowColor = "rgba(75,58,98,0.25)";
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetY = 12;
+  ctx.fillStyle = "#FFFDF9";
+  roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 36);
+  ctx.fill();
+  ctx.restore();
+
+  // marco doble: coral exterior y lila punteado interior
+  ctx.strokeStyle = CORAL;
+  ctx.lineWidth = 5;
+  roundRect(ctx, pad+12, pad+12, W - (pad+12)*2, H - (pad+12)*2, 28);
+  ctx.stroke();
+  ctx.strokeStyle = "#CFC3EE";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([2, 9]);
+  ctx.lineCap = "round";
+  roundRect(ctx, pad+26, pad+26, W - (pad+26)*2, H - (pad+26)*2, 20);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // confeti en las esquinas de la tarjeta
+  const confetti = [
+    [110, 125, 9, "#FFC93C"], [145, 100, 6, "#5FBF9B"], [92, 165, 5, "#FF8F76"],
+    [W-110, 125, 9, "#FF8F76"], [W-145, 100, 6, "#FFC93C"], [W-92, 165, 5, "#5FBF9B"],
+    [110, H-125, 8, "#8B7CF6"], [W-110, H-125, 8, "#FFC93C"]
+  ];
+  confetti.forEach(([x, y, r, c]) => {
+    ctx.fillStyle = c;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  });
+
+  ctx.textAlign = "center";
+
+  // trofeo
+  ctx.font = "64px sans-serif";
+  ctx.fillText("🏆", W/2, 142);
+
+  // titulo
+  ctx.fillStyle = PLUM;
+  ctx.font = "800 54px 'Bricolage Grotesque', sans-serif";
+  ctx.fillText("Certificado de logro", W/2, 208);
+
+  // cinta coral
+  ctx.font = "700 22px 'Figtree', sans-serif";
+  const ribbon = "Aventura TIC";
+  const rw = ctx.measureText(ribbon).width + 56;
+  ctx.fillStyle = CORAL;
+  roundRect(ctx, W/2 - rw/2, 228, rw, 40, 20);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.fillText(ribbon, W/2, 256);
+
+  // texto de otorgamiento
+  ctx.fillStyle = SOFT;
+  ctx.font = "600 22px 'Figtree', sans-serif";
+  ctx.fillText("Este reconocimiento se otorga a", W/2, 314);
+
+  // nombre
+  ctx.fillStyle = CORAL;
+  ctx.font = "800 60px 'Bricolage Grotesque', sans-serif";
+  ctx.fillText(playerName, W/2, 378, W - pad*2 - 120);
+
+  // subrayado decorativo
+  ctx.strokeStyle = "#CFC3EE";
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(W/2 - 190, 400); ctx.lineTo(W/2 + 190, 400); ctx.stroke();
+  ctx.fillStyle = "#FFC93C";
+  ctx.beginPath(); ctx.arc(W/2, 400, 7, 0, Math.PI*2); ctx.fill();
+
+  // puntaje
+  ctx.fillStyle = SOFT;
+  ctx.font = "600 22px 'Figtree', sans-serif";
+  ctx.fillText(`por completar los ${total} niveles con un puntaje de`, W/2, 448);
+
+  ctx.fillStyle = "#D8F3E5";
+  roundRect(ctx, W/2 - 125, 466, 250, 78, 39);
+  ctx.fill();
+  ctx.strokeStyle = LEAF;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = "#2E7D5E";
+  ctx.font = "800 52px 'Bricolage Grotesque', sans-serif";
+  ctx.fillText(`${score} / ${total}`, W/2, 522);
+
+  // insignia y fecha
+  ctx.fillStyle = PLUM;
+  ctx.font = "700 22px 'Figtree', sans-serif";
+  ctx.fillText(`🎖️ ${lastBadge}`, W/2, 580);
+
+  const dateStr = new Date().toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' });
+  ctx.fillStyle = "#9384A8";
+  ctx.font = "500 17px 'Figtree', sans-serif";
+  ctx.fillText(dateStr, W/2, 606);
+
+  const link = document.createElement('a');
+  link.download = `certificado-tic-${playerName.replace(/\s+/g,'_')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+</script>
+
+</body>
+</html>
